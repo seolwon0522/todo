@@ -1,0 +1,105 @@
+name: Claude Auto PR
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude-auto-pr:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude-pr')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude-pr'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Extract request from comment
+        id: extract_request
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            COMMENT_BODY="${{ github.event.comment.body }}"
+          else
+            COMMENT_BODY="${{ github.event.comment.body }}"
+          fi
+          
+          # Extract text after @claude-pr
+          REQUEST=$(echo "$COMMENT_BODY" | sed -n 's/.*@claude-pr \(.*\)/\1/p')
+          echo "request=$REQUEST" >> $GITHUB_OUTPUT
+          
+          # Generate branch name
+          BRANCH_NAME="claude-auto-$(date +%s)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Create feature branch
+        run: |
+          git config --global user.name "Claude Bot"
+          git config --global user.email "claude@anthropic.com"
+          git checkout -b ${{ steps.extract_request.outputs.branch_name }}
+
+      - name: Run Claude Code improvements
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "30"
+          context: |
+            요청사항: ${{ steps.extract_request.outputs.request }}
+            
+            다음 개선사항을 코드에 직접 적용해주세요:
+            1. 보안 취약점 수정 (DB 설정 환경변수화)
+            2. 입력 검증 강화 (@Valid 추가)
+            3. 예외 처리 체계화 (GlobalExceptionHandler)
+            4. API 엔드포인트 불일치 수정
+            
+            변경사항을 파일에 직접 적용하고 커밋해주세요.
+
+      - name: Push changes and create PR
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "🤖 Claude 자동 개선사항 적용
+            
+            요청: ${{ steps.extract_request.outputs.request }}
+            
+            - 코드 품질 개선
+            - 보안 취약점 수정
+            - 베스트 프랙티스 적용
+            
+            🤖 Generated with Claude Code"
+            
+            git push origin ${{ steps.extract_request.outputs.branch_name }}
+            
+            # Create PR using GitHub CLI
+            gh pr create \
+              --title "🤖 Claude 자동 개선: ${{ steps.extract_request.outputs.request }}" \
+              --body "## 🤖 Claude 자동 개선사항
+              
+              **요청사항**: ${{ steps.extract_request.outputs.request }}
+              
+              ## 적용된 개선사항
+              - ✅ 보안 취약점 수정
+              - ✅ 입력 검증 강화  
+              - ✅ 예외 처리 체계화
+              - ✅ API 엔드포인트 수정
+              
+              ## 검토 요청
+              자동으로 생성된 PR입니다. 코드 리뷰 후 머지해주세요.
+              
+              🤖 Generated with [Claude Code](https://claude.ai/code)" \
+              --head ${{ steps.extract_request.outputs.branch_name }} \
+              --base main
+          else
+            echo "No changes detected"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
