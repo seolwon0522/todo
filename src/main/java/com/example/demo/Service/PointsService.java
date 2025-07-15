@@ -17,13 +17,10 @@ public class PointsService {
     private final TimeSessionRepository timeSessionRepository;
     
     public List<TimeSessionResponseDto> getPointsHistory(User user) {
-        return timeSessionRepository.findByUserOrderByEndTimeDesc(user)
+        return timeSessionRepository.findByUser(user)
                 .stream()
                 .map(TimeSessionResponseDto::fromEntity)
                 .collect(Collectors.toList());
     }
-    
-    public Long getTotalPoints(User user) {
-        return user.getCurrentPoints();
-    }
+
 } 

@@ -14,16 +14,22 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TimeSessionResponseDto {
     private Long id;
+    private Long userId;
+    private Long todoId;
+    private Integer sessionSeconds;
+    private Long pointsEarned;
     private LocalDateTime startTime;
-    private Long focusTime;
-    private Long points;
+    private LocalDateTime endTime;
     
     public static TimeSessionResponseDto fromEntity(TimeSession timeSession) {
         return TimeSessionResponseDto.builder()
                 .id(timeSession.getId())
+                .userId(timeSession.getUser().getId())
+                .todoId(timeSession.getTodo().getId())
+                .sessionSeconds(timeSession.getSessionSeconds())
+                .pointsEarned(timeSession.getPointsEarned())
                 .startTime(timeSession.getStartTime())
-                .focusTime(timeSession.getSessionSeconds().longValue())
-                .points(timeSession.getPointsEarned())
+                .endTime(timeSession.getEndTime())
                 .build();
     }
 } 

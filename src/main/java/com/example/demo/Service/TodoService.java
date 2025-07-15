@@ -26,11 +26,11 @@ public class TodoService {
 
     private Todo findTodo(Long id, User user) {
         return todoRepository.findByIdAndUser(id, user)
-                .orElseThrow(() -> new IllegalArgumentException("Todo not found"));
+                .orElseThrow(() -> new IllegalArgumentException("할일을 찾을 수 없습니다"));
     }
 
-    public TodoResponseDto createTodo(TodoRequestDto req, User user) {
-        Todo todo = req.toEntity();
+    public TodoResponseDto createTodo(TodoRequestDto request, User user) {
+        Todo todo = request.toEntity();
         if (todo.getStatus() == null) {
             todo.setStatus(Status.TODO);
         }
@@ -43,19 +43,19 @@ public class TodoService {
         return TodoResponseDto.fromEntity(todo);
     }
 
-    public TodoResponseDto updateTodo(Long id, TodoRequestDto req, User user) {
-        Todo todo = findTodo(id, user);
+    public TodoResponseDto updateTodo(Long id, TodoRequestDto request, User user) {
+        Todo existingTodo = findTodo(id, user);
         
-        todo.setTitle(req.getTitle());
-        todo.setDescription(req.getDescription());
-        todo.setStatus(req.getStatus() != null ? req.getStatus() : Status.TODO);
+        existingTodo.setTitle(request.getTitle());
+        existingTodo.setDescription(request.getDescription());
+        existingTodo.setStatus(request.getStatus() != null ? request.getStatus() : Status.TODO);
 
-        return TodoResponseDto.fromEntity(todoRepository.save(todo));
+        return TodoResponseDto.fromEntity(todoRepository.save(existingTodo));
     }
 
     public void deleteTodo(Long id, User user) {
-        Todo todo = findTodo(id, user);
-        todoRepository.delete(todo);
+        Todo todoToDelete = findTodo(id, user);
+        todoRepository.delete(todoToDelete);
     }
 
     public List<TodoResponseDto> getAllTodos(User user) {
@@ -64,52 +64,51 @@ public class TodoService {
                 .toList();
     }
 
-    public TodoResponseDto updateFocusTime(Long id, Long seconds, User user) {
+    public TodoResponseDto updateFocusTime(Long id, Long additionalSeconds, User user) {
         Todo todo = findTodo(id, user);
 
-        Long points = calcPoints(user, seconds);
+        Long earnedPoints = calculateEarnedPoints(user, additionalSeconds);
         
-        Long currentTime = todo.getTotalFocusTime() != null ? todo.getTotalFocusTime() : 0L;
-        todo.setTotalFocusTime(currentTime + seconds);
-        Todo saved = todoRepository.save(todo);
+        updateTodoFocusTime(todo, additionalSeconds);
+        Todo savedTodo = todoRepository.save(todo);
         
-        TimeSession session = TimeSession.createSession(user, saved, seconds, points);
-        timeSessionRepository.save(session);
+        createTimeSession(user, savedTodo, additionalSeconds, earnedPoints);
+        updateUserStats(user, additionalSeconds, earnedPoints);
         
-        updateUserFocusTime(user, seconds);
-        
-        if (points > 0) {
-            updatePoints(user, points);
-        }
-        
-        return TodoResponseDto.fromEntity(saved);
+        return TodoResponseDto.fromEntity(savedTodo);
     }
     
-    private Long calcPoints(User user, Long seconds) {
-        Integer leftover = user.getLeftoverSeconds();
-        if (leftover == null) leftover = 0;
+    private Long calculateEarnedPoints(User user, Long seconds) {
+        Integer leftoverSeconds = user.getLeftoverSeconds() != null ? user.getLeftoverSeconds() : 0;
         
-        Long total = leftover + seconds;
-        Long points = total / 60;
-        Integer newLeftover = (int) (total % 60);
+        Long totalSeconds = leftoverSeconds + seconds;
+        Long points = totalSeconds / 60;
+        Integer newLeftoverSeconds = (int) (totalSeconds % 60);
         
-        user.setLeftoverSeconds(newLeftover);
-        userRepository.save(user);
+        user.setLeftoverSeconds(newLeftoverSeconds);
         
         return points;
     }
     
-    private void updatePoints(User user, Long points) {
-        Long current = user.getCurrentPoints();
-        if (current == null) current = 0L;
-        user.setCurrentPoints(current + points);
-        userRepository.save(user);
+    private void updateTodoFocusTime(Todo todo, Long additionalSeconds) {
+        Long currentFocusTime = todo.getTotalFocusTime() != null ? todo.getTotalFocusTime() : 0L;
+        todo.setTotalFocusTime(currentFocusTime + additionalSeconds);
     }
     
-    private void updateUserFocusTime(User user, Long seconds) {
-        Long current = user.getTotalFocusTime();
-        if (current == null) current = 0L;
-        user.setTotalFocusTime(current + seconds);
+    private void createTimeSession(User user, Todo todo, Long seconds, Long points) {
+        TimeSession session = TimeSession.createSession(user, todo, seconds, points);
+        timeSessionRepository.save(session);
+    }
+    
+    private void updateUserStats(User user, Long additionalSeconds, Long earnedPoints) {
+        Long currentFocusTime = user.getTotalFocusTime() != null ? user.getTotalFocusTime() : 0L;
+        user.setTotalFocusTime(currentFocusTime + additionalSeconds);
+        
+        if (earnedPoints > 0) {
+            Long currentPoints = user.getCurrentPoints() != null ? user.getCurrentPoints() : 0L;
+            user.setCurrentPoints(currentPoints + earnedPoints);
+        }
+        
         userRepository.save(user);
     }
 }

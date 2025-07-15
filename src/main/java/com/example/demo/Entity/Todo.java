@@ -15,14 +15,14 @@ public class Todo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 할 일 ID
-    private String title; // 할 일 제목
-    private String description; // 할 일 상세 설명
+    private Long id;
+    private String title;
+    private String description;
     @Enumerated(EnumType.STRING)
-    private Status status; // 할 일 상태 (TODO, IN_PROGRESS, DONE)
+    private Status status;
     
     @Builder.Default
-    private Long totalFocusTime = 0L; // 총 집중시간 (초 단위)
+    private Long totalFocusTime = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

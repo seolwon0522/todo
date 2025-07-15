@@ -1,12 +1,13 @@
 package com.example.demo.Controller;
 
+import com.example.demo.Dto.ApiResponse;
 import com.example.demo.Dto.TodoRequestDto;
 import com.example.demo.Dto.TodoResponseDto;
 import com.example.demo.Entity.User;
-import com.example.demo.Repository.UserRepository;
 import com.example.demo.Service.TodoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -17,55 +18,49 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/todos")
-@CrossOrigin(
-    origins = {"http://localhost:3000", "http://127.0.0.1:3000"}, 
-    allowCredentials = "true",
-    methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS}
-)
-public class TodoController {
+public class TodoController extends BaseController {
     private final TodoService todoService;
-    private final UserRepository userRepository;
-
-    // 현재 사용자 정보 조회 헬퍼 메서드
-    private User getCurrentUser(Principal principal) {
-        return userRepository.findByUserId(principal.getName())
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
-    }
 
     @PostMapping
-    public TodoResponseDto createTodo(@RequestBody TodoRequestDto todoRequestDto, Principal principal) {
+    public ResponseEntity<ApiResponse<TodoResponseDto>> createTodo(@RequestBody TodoRequestDto todoRequestDto, Principal principal) {
         User user = getCurrentUser(principal);
-        return todoService.createTodo(todoRequestDto, user);
+        TodoResponseDto response = todoService.createTodo(todoRequestDto, user);
+        return ResponseEntity.ok(ApiResponse.success(response, "Todo created successfully"));
     }
 
     @GetMapping("/{id}")
-    public TodoResponseDto getTodoById(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<ApiResponse<TodoResponseDto>> getTodoById(@PathVariable Long id, Principal principal) {
         User user = getCurrentUser(principal);
-        return todoService.getTodoById(id, user);
+        TodoResponseDto response = todoService.getTodoById(id, user);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping
-    public List<TodoResponseDto> getAllTodos(Principal principal) {
+    public ResponseEntity<ApiResponse<List<TodoResponseDto>>> getAllTodos(Principal principal) {
         User user = getCurrentUser(principal);
-        return todoService.getAllTodos(user);
+        List<TodoResponseDto> response = todoService.getAllTodos(user);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PutMapping("/{id}")
-    public TodoResponseDto updateTodo(@PathVariable Long id, @RequestBody TodoRequestDto todoRequestDto, Principal principal) {
+    public ResponseEntity<ApiResponse<TodoResponseDto>> updateTodo(@PathVariable Long id, @RequestBody TodoRequestDto todoRequestDto, Principal principal) {
         User user = getCurrentUser(principal);
-        return todoService.updateTodo(id, todoRequestDto, user);
+        TodoResponseDto response = todoService.updateTodo(id, todoRequestDto, user);
+        return ResponseEntity.ok(ApiResponse.success(response, "Todo updated successfully"));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<ApiResponse<Void>> deleteTodo(@PathVariable Long id, Principal principal) {
         User user = getCurrentUser(principal);
         todoService.deleteTodo(id, user);
+        return ResponseEntity.ok(ApiResponse.success(null, "Todo deleted successfully"));
     }
 
-    @PostMapping("/{id}/focus-time")
-    public TodoResponseDto updateFocusTime(@PathVariable Long id, @RequestBody Map<String, Long> request, Principal principal) {
+    @PutMapping("/{id}/focus-time")
+    public ResponseEntity<ApiResponse<TodoResponseDto>> updateFocusTime(@PathVariable Long id, @RequestBody Map<String, Long> request, Principal principal) {
         User user = getCurrentUser(principal);
         Long additionalSeconds = request.get("additionalSeconds");
-        return todoService.updateFocusTime(id, additionalSeconds, user);
+        TodoResponseDto response = todoService.updateFocusTime(id, additionalSeconds, user);
+        return ResponseEntity.ok(ApiResponse.success(response, "Focus time updated successfully"));
     }
 }

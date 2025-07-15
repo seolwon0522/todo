@@ -12,12 +12,6 @@ import java.util.List;
 @Repository
 public interface TimeSessionRepository extends JpaRepository<TimeSession, Long> {
     
-    List<TimeSession> findByUserOrderByEndTimeDesc(User user);
-    
-    @Query("SELECT SUM(ts.sessionSeconds) FROM TimeSession ts WHERE ts.user.id = :userId")
-    Long getTotalFocusTimeByUserId(@Param("userId") Long userId);
-    
-    @Query("SELECT SUM(ts.sessionSeconds) FROM TimeSession ts WHERE ts.todo.id = :todoId")
-    Long getTotalFocusTimeByTodoId(@Param("todoId") Long todoId);
+    List<TimeSession> findByUser(User user);
 
-} 
+}
