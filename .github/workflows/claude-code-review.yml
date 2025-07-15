@@ -26,6 +26,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           timeout_minutes: "20"
           context: |
             다음 작업을 수행해주세요:
