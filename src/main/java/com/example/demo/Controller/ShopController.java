@@ -4,6 +4,7 @@ import com.example.demo.Dto.ApiResponse;
 import com.example.demo.Dto.ItemResponseDto;
 import com.example.demo.Dto.PurchaseResponseDto;
 import com.example.demo.Entity.User;
+import com.example.demo.Repository.UserRepository;
 import com.example.demo.Service.ShopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +16,18 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/shop")
-public class ShopController extends BaseController {
+public class ShopController {
     
+    private final UserRepository userRepository;
     private final ShopService shopService;
+    
+    protected User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("인증이 필요합니다");
+        }
+        return userRepository.findByUserId(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을수없습니다"));
+    }
     
     @GetMapping("/items")
     public ResponseEntity<ApiResponse<List<ItemResponseDto>>> getAllItems(Principal principal) {

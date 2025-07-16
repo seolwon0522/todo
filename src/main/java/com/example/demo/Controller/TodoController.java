@@ -4,6 +4,7 @@ import com.example.demo.Dto.ApiResponse;
 import com.example.demo.Dto.TodoRequestDto;
 import com.example.demo.Dto.TodoResponseDto;
 import com.example.demo.Entity.User;
+import com.example.demo.Repository.UserRepository;
 import com.example.demo.Service.TodoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +19,17 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/todos")
-public class TodoController extends BaseController {
+public class TodoController {
+    private final UserRepository userRepository;
     private final TodoService todoService;
+    
+    protected User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("인증이 필요합니다");
+        }
+        return userRepository.findByUserId(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을수없습니다"));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<TodoResponseDto>> createTodo(@RequestBody TodoRequestDto todoRequestDto, Principal principal) {

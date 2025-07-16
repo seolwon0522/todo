@@ -5,6 +5,7 @@ import com.example.demo.Dto.TimeSessionResponseDto;
 import com.example.demo.Dto.UserRequestDto;
 import com.example.demo.Dto.UserResponseDto;
 import com.example.demo.Entity.User;
+import com.example.demo.Repository.UserRepository;
 import com.example.demo.Service.PointsService;
 import com.example.demo.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,10 +24,19 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
-public class UserController extends BaseController {
+public class UserController {
     
+    private final UserRepository userRepository;
     private final UserService userService;
     private final PointsService pointsService;
+    
+    protected User getCurrentUser(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("인증이 필요합니다");
+        }
+        return userRepository.findByUserId(principal.getName())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을수없습니다"));
+    }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponseDto>> register(@RequestBody UserRequestDto userRequestDto) {
