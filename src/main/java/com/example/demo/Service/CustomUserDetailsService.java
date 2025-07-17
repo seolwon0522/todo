@@ -22,9 +22,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다"));
 
         return new org.springframework.security.core.userdetails.User(
-                user.getUserId(),
-                user.getUserPw(),
-                new ArrayList<>()
+                user.getUserId(), //userId를 username으로 바꿈
+                user.getUserPw(), //userPw를 password로 바꿈
+                new ArrayList<>() //권한 은 비워둠
         );
     }
 } 

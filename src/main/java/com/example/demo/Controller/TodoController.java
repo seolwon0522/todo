@@ -35,7 +35,7 @@ public class TodoController {
     public ResponseEntity<ApiResponse<TodoResponseDto>> createTodo(@RequestBody TodoRequestDto todoRequestDto, Principal principal) {
         User user = getCurrentUser(principal);
         TodoResponseDto response = todoService.createTodo(todoRequestDto, user);
-        return ResponseEntity.ok(ApiResponse.success(response, "Todo created successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Todo 생성 완료"));
     }
 
     @GetMapping("/{id}")
@@ -56,14 +56,14 @@ public class TodoController {
     public ResponseEntity<ApiResponse<TodoResponseDto>> updateTodo(@PathVariable Long id, @RequestBody TodoRequestDto todoRequestDto, Principal principal) {
         User user = getCurrentUser(principal);
         TodoResponseDto response = todoService.updateTodo(id, todoRequestDto, user);
-        return ResponseEntity.ok(ApiResponse.success(response, "Todo updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "Todo 수정 완료"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTodo(@PathVariable Long id, Principal principal) {
         User user = getCurrentUser(principal);
         todoService.deleteTodo(id, user);
-        return ResponseEntity.ok(ApiResponse.success(null, "Todo deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Todo 삭제 완료"));
     }
 
     @PutMapping("/{id}/focus-time")
@@ -71,6 +71,6 @@ public class TodoController {
         User user = getCurrentUser(principal);
         Long additionalSeconds = request.get("additionalSeconds");
         TodoResponseDto response = todoService.updateFocusTime(id, additionalSeconds, user);
-        return ResponseEntity.ok(ApiResponse.success(response, "Focus time updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(response, "집중시간 업데이트 완료"));
     }
 }

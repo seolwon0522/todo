@@ -23,4 +23,5 @@ public class PointsService {
                 .collect(Collectors.toList());
     }
 
+
 } 

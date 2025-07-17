@@ -5,11 +5,14 @@ import com.example.demo.Dto.UserResponseDto;
 import com.example.demo.Entity.User;
 import com.example.demo.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,7 +40,7 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
     }
     
-    public UserResponseDto authenticateUser(UserRequestDto userRequestDto) {
+    public UserResponseDto authenticateUser(UserRequestDto userRequestDto, HttpServletRequest request) {
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(userRequestDto.getUserId(), userRequestDto.getUserPw())
         );

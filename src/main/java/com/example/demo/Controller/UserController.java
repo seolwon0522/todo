@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -30,7 +29,7 @@ public class UserController {
     private final UserService userService;
     private final PointsService pointsService;
     
-    protected User getCurrentUser(Principal principal) {
+    private User getCurrentUser(Principal principal) {
         if (principal == null) {
             throw new IllegalArgumentException("인증이 필요합니다");
         }
@@ -42,23 +41,17 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponseDto>> register(@RequestBody UserRequestDto userRequestDto) {
         UserResponseDto response = userService.register(userRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Registration successful"));
+                .body(ApiResponse.success(response, "회원가입 성공"));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<UserResponseDto>> login(@RequestBody UserRequestDto userRequestDto, 
                                                HttpServletRequest request) {
         try {
-            UserResponseDto response = userService.authenticateUser(userRequestDto);
-            
-            // 세션에 저장
-            HttpSession session = request.getSession(true);
-            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, 
-                                SecurityContextHolder.getContext());
-            
-            return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+            UserResponseDto response = userService.authenticateUser(userRequestDto, request);
+            return ResponseEntity.ok(ApiResponse.success(response, "로그인 성공"));
         } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body(ApiResponse.error("Invalid credentials"));
+            return ResponseEntity.status(401).body(ApiResponse.error("로그인 실패"));
         }
     }
     
@@ -69,7 +62,7 @@ public class UserController {
         if (session != null) {
             session.invalidate();
         }
-        return ResponseEntity.ok(ApiResponse.success(null, "Logout successful"));
+        return ResponseEntity.ok(ApiResponse.success(null, "로그아웃 성공"));
     }
     
     @GetMapping("/me")
@@ -78,8 +71,7 @@ public class UserController {
         UserResponseDto response = userService.getCurrentUser(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-    
-    // Points endpoints under user context
+
     @GetMapping("/me/points")
     public ResponseEntity<ApiResponse<Long>> getMyPoints(Principal principal) {
         User user = getCurrentUser(principal);
