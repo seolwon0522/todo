@@ -44,6 +44,11 @@ public class UserService {
         
         SecurityContextHolder.getContext().setAuthentication(authentication);
         
+        // 세션에 SecurityContext 저장
+        HttpSession session = request.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, 
+                            SecurityContextHolder.getContext());
+        
         User user = findByUserId(userRequestDto.getUserId());
         return UserResponseDto.fromEntity(user);
     }
